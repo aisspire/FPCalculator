@@ -1,0 +1,5 @@
+生成文件树.bat
+*.txt
+*.out
+*.vcd
+/tool
