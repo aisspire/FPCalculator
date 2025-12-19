@@ -14,7 +14,7 @@ module fp_add_sub (
 
     // --- 阶段 1: 分解与特殊值检查 ---
     wire        sign_a, sign_b;
-    wire [11:0] exp_a, exp_b;
+    wire signed [11:0] exp_a, exp_b;
     wire [52:0] mant_a, mant_b;
     wire        is_nan_a, is_nan_b, is_inf_a, is_inf_b, is_zero_a, is_zero_b;
     wire        is_denorm_a, is_denorm_b;
@@ -65,7 +65,7 @@ module fp_add_sub (
         // 规则: 任何运算涉及到一个 NaN，结果都是 NaN。
         if (res_is_nan) begin
             // 输出一个 Quiet NaN (QNaN)。最高有效位为1。
-            special_case_res = 64'h7FF8000000000001;
+            special_case_res = 64'h7FF8000000000000;
         end
         // --- 无穷大 (Infinity) 的处理 ---
         else if (res_is_inf) begin
@@ -73,28 +73,22 @@ module fp_add_sub (
             special_case_res = {inf_sign, 11'h7FF, 52'h0};
         end
         // --- 零 (Zero) 的处理 ---
-        else if (is_zero_a || is_zero_b) begin
-            // 场景1: A 是 0
-            // 0 + B = B
-            // 0 - B = -B
-            if (is_zero_a) begin
-                // 当两个操作数都为0时，此逻辑也适用
-                // +0 + (+0) = +0, -0 + (-0) = -0
-                // +0 + (-0) = +0 (根据舍入模式，通常为+0)
-                // +0 - (+0) = +0, +0 - (-0) = +0
-                if (is_zero_b && (sign_a == (sign_b ^ is_sub))) begin
-                    // 两个零相减且符号相同，或相加且符号相反，结果为+0
-                    special_case_res = 64'h0000000000000000;
-                end else begin
-                    // is_sub 为真，对 B 的符号位取反
-                    special_case_res = {(sign_b ^ is_sub), fp_b_in[62:0]};
-                end
-            end
-            // 场景2: B 是 0 (且 A 不是 0)
-            // A +/- 0 = A
-            else begin // is_zero_b
+        else if (is_zero_a && is_zero_b) begin
+            // effective_sub = is_sub ^ sign_a ^ sign_b
+            // 如果是有效减法 (例如 (+0)+(-0) 或 (+0)-(+0))，结果是 +0
+            if (effective_sub) begin
+                special_case_res = 64'h0000000000000000; // +0
+            end else begin
+                // 否则是有效加法 (例如 (+0)+(+0) 或 (-0)+(-0))，结果符号不变
+                // 两个操作数都是0，取哪个都一样
                 special_case_res = fp_a_in;
             end
+        end
+        else if (is_zero_a) begin // 只有 A 是 0
+            special_case_res = {(sign_b ^ is_sub), fp_b_in[62:0]}; // 0 +/- B = +/-B
+        end
+        else begin // 只有 B 是 0
+            special_case_res = fp_a_in; // A +/- 0 = A
         end
     end
 
@@ -105,17 +99,16 @@ module fp_add_sub (
     // --- 常规路径：两个数都是规格化/非规格化数 ---
 
     // --- 阶段 2: 对阶 ---
-    wire [11:0] exp_diff;
-    wire a_exp_is_larger = (exp_a > exp_b);
+    wire signed [11:0] exp_diff;
+    wire op_a_is_larger = (exp_a > exp_b) || ((exp_a == exp_b) && (mant_a >= mant_b));
 
-    wire [11:0] exp_large = a_exp_is_larger ? exp_a : exp_b;
-    wire [11:0] exp_small = a_exp_is_larger ? exp_b : exp_a;
+    wire signed [11:0] exp_large = op_a_is_larger ? exp_a : exp_b;
+    wire signed [11:0] exp_small = op_a_is_larger ? exp_b : exp_a;
 
-    wire [52:0] mant_large = a_exp_is_larger ? mant_a : mant_b;
-    wire [52:0] mant_small = a_exp_is_larger ? mant_b : mant_a;
-    wire        sign_large = a_exp_is_larger ? sign_a : sign_b;
+    wire [52:0] mant_large = op_a_is_larger ? mant_a : mant_b;
+    wire [52:0] mant_small = op_a_is_larger ? mant_b : mant_a;
 
-    assign exp_diff = exp_large - exp_small;
+    assign  exp_diff = exp_large - exp_small;
 
     // 对阶移位
     wire [52:0] mant_small_shifted;
@@ -143,7 +136,8 @@ module fp_add_sub (
         .result(add_sub_res)
     );
 
-    wire res_sign = sign_large; // 结果的符号初步判断为较大数的符号
+    wire sign_b_eff = sign_b ^ is_sub;
+    wire res_sign = effective_sub ? (op_a_is_larger ? sign_a : sign_b_eff) : sign_a;
 
     // --- 阶段 4: 规格化 ---
     wire        add_overflow = add_sub_res[53] && !effective_sub; // 加法溢出，最高位是2
@@ -152,7 +146,7 @@ module fp_add_sub (
 
     lzc_53 lzc (.data_in(add_sub_res[52:0]), .count(lzc_amount));
 
-    reg [11:0] norm_exp;
+    reg signed [11:0] norm_exp;
     reg [52:0] norm_mant;
     reg         norm_g, norm_r, norm_s;
 
@@ -177,36 +171,99 @@ module fp_add_sub (
 
     end
 
-    // --- 阶段 5: 舍入 ---
+    // --- 阶段 5: 下溢判断与预处理 ---
+    // 在这里，我们需要处理从规格化阶段来的 norm_exp, norm_mant, 和 g,r,s 位
+    // 检查指数是否小于最小规格化指数 (-1022)
+    localparam signed MIN_EXP = -1022;
+    wire        is_underflow_candidate = (norm_exp < MIN_EXP);
+    wire [11:0] shift_amount_uf = MIN_EXP - norm_exp; // 计算需要右移的位数
+
+    reg signed  [52:0] pre_round_mant;
+    reg signed [11:0] pre_round_exp;
+    reg        pre_round_g, pre_round_r, pre_round_s;
+
+    always @(*) begin
+        if (is_underflow_candidate && (shift_amount_uf < 54)) begin
+            // 发生下溢，需要右移尾数，将其转为非规格化数形式
+            pre_round_exp = MIN_EXP; // 准备进入非规格化范围
+            // 将 norm_mant 和 g,r,s 拼接起来进行右移
+            {pre_round_mant, pre_round_g, pre_round_r, pre_round_s} = 
+                {{1'b0, norm_mant}, norm_g, norm_r, norm_s} >> shift_amount_uf;
+        end else begin
+            // 正常路径，或下溢后完全移出为0
+            pre_round_exp  = norm_exp;
+            pre_round_mant = norm_mant;
+            pre_round_g    = norm_g;
+            pre_round_r    = norm_r;
+            pre_round_s    = norm_s;
+        end
+    end
+
+    // --- 阶段 6: 舍入 ---
     wire [52:0] rounded_mant;
     wire        round_carry_out;
 
     fp_rounder rounder (
-        .mant_in(norm_mant),
-        .g(norm_g), .r(norm_r), .s(norm_s),
+        .mant_in(pre_round_mant),
+        .g(pre_round_g), .r(pre_round_r), .s(pre_round_s),
         .mant_out(rounded_mant),
         .carry_out(round_carry_out)
     );
 
-    // --- 阶段 6 & 7: 最终组合 ---
-    wire [11:0] final_exp;
-    wire [52:0] final_mant;
+    // --- 阶段 7: 最终组合 ---
+    reg [11:0] final_exp_field;
+    reg [51:0] final_mant_field;
     
-    // 检查舍入是否再次导致溢出
-    assign final_exp  = round_carry_out ? (norm_exp + 1) : norm_exp;
-    assign final_mant = round_carry_out ? 53'h10000000000000 : rounded_mant; // 溢出后尾数为1.000...
+    // 判断最终结果是否为0 (减法完全抵消或下溢为0)
+    // rounded_mant全为0且无进位，则结果为0
+    wire final_is_zero = (rounded_mant == 0); 
+    
+    reg temp_exp;
+    
+    always@(*) begin
+        // 默认值
+        final_exp_field  = 12'd0;
+        final_mant_field = 52'd0;
 
-    // 判断最终结果是否为0 (减法完全抵消)
-    // 如果规格化后的尾数是0，则结果是0
-    wire final_is_zero = (norm_mant == 0); 
+        if (round_carry_out) begin
+            // 舍入导致进位
+            if (pre_round_exp == 1023) begin // 从最大规格化数溢出到无穷大
+                final_exp_field = 11'h7FF;
+                final_mant_field = 52'h0;
+            end else if (pre_round_exp == MIN_EXP - 1) begin // 从非规格化数进位到规格化数
+                final_exp_field = 1; // 最小的规格化指数
+                final_mant_field = 52'h0; // 尾数部分为0
+            end else begin
+                final_exp_field = pre_round_exp + 1023 + 1;
+                final_mant_field = 52'h0; // 尾数部分为0
+            end
+        end else begin
+            // 无舍入进位
+            // 如果指数小于-1022，或者指数等于-1022但隐藏位为0，则为非规格化数
+            if (pre_round_exp < MIN_EXP || (pre_round_exp == MIN_EXP && rounded_mant[52] == 0)) begin
+                final_exp_field = 11'h000;
+                final_mant_field = rounded_mant[51:0];
+            end else begin // 规格化数
+                final_exp_field = pre_round_exp + 1023;
+                final_mant_field = rounded_mant[51:0]; // 丢弃隐藏位
+            end
+        end
+        
+        // 检查指数上溢 (例如 norm_exp 本身就很大)
+        if (norm_exp > 1023) begin
+            final_exp_field = 11'h7FF;
+            final_mant_field = 52'h0;
+        end
+    end
+
 
     wire [63:0] normal_path_res;
     fp_recomposer recomposer (
         .final_sign(res_sign),
-        .final_exponent(final_exp),
-        .final_mantissa(final_mant),
+        .final_exponent_field(final_exp_field[10:0]),
+        .final_mantissa_field(final_mant_field),
         .is_nan_out(1'b0), // NaN在特殊路径处理
-        .is_inf_out(1'b0), // Inf在特殊路径处理
+        .is_inf_out(norm_exp > 1023 || (round_carry_out && pre_round_exp == 1023)), // Inf
         .is_zero_out(final_is_zero),
         .fp_out(normal_path_res)
     );
@@ -215,5 +272,4 @@ module fp_add_sub (
     assign fp_res_out = is_special_case ? special_case_res : normal_path_res;
 
 endmodule
-
 `default_nettype wire

@@ -7,7 +7,7 @@ module fp_decomposer (
     input  wire [63:0] fp_in,          // 输入的64位浮点数
 
     output wire        sign,           // 符号位
-    output wire [11:0] exponent,       // 12位指数 (含符号，为方便计算)
+    output wire signed [11:0] exponent,       // 12位指数 (含符号，为方便计算)
     output wire [52:0] mantissa,       // 53位尾数 (规格化数含隐藏位'1', 非规格化数含'0')
     
     output wire        is_nan,         // 是不是NaN
