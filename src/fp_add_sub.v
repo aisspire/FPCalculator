@@ -270,6 +270,5 @@ module fp_add_sub (
 
     // --- 最终输出选择 ---
     assign fp_res_out = is_special_case ? special_case_res : normal_path_res;
-
 endmodule
 `default_nettype wire

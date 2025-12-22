@@ -1,0 +1,28 @@
+/*  .\file\filelist_add_sub.txt
+    注意：路径应为相对于你执行iverilog命令的位置
+    假设你在项目根目录执行*/
+.\src\fp_add_sub.v
+
+/*------依赖的所有子模块------*/
+.\src\common\add_sub_53.v
+
+.\src\common\alignment_shifter.v
+
+.\src\common\fp_decomposer.v
+
+.\src\common\fp_recomposer.v
+
+.\src\common\fp_rounder.v
+
+.\src\common\lzc_53.v
+
+/*------testbench文件------*/
+.\tb\tb_fp_add_sub.v
+
+
+/*------命令------*/
+/*
+    .\tool\iverilog\bin\iverilog.exe -o .\out\tb_fp_add_sub.out -c .\file\filelist_add_sub.txt
+    .\tool\iverilog\bin\vvp.exe .\out\tb_fp_add_sub.out
+    .\tool\iverilog\gtkwave\bin\gtkwave.exe tb_fp_add_sub.vcd
+*/

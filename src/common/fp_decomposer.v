@@ -24,7 +24,7 @@ module fp_decomposer (
     // 2. 定义特殊指数值
     localparam EXP_ALL_ZEROS = 11'h000;
     localparam EXP_ALL_ONES  = 11'h7FF;
-    localparam EXP_BIAS      = 1023;
+    localparam signed [12:0] EXP_BIAS = 13'sd1023;
 
     // 3. 判断特殊类型
     wire is_special_exp = (raw_exponent == EXP_ALL_ZEROS) || (raw_exponent == EXP_ALL_ONES);
@@ -49,9 +49,9 @@ module fp_decomposer (
     // - 规格化数: 实际指数 = 偏移指数 - 偏移量
     // - 非规格化数: 实际指数固定为 1 - 偏移量 = -1022
     // - 特殊值: 指数可以设为0，因为会被is_nan/is_inf标志处理
-    assign exponent = (is_denormalized)   ? (1 - EXP_BIAS) :          // 非规格化数，指数为 1-1023 = -1022
-                    (is_special_exp)   ? 12'd0 :                   // 特殊值 (Inf, NaN)，指数可为0
-                                     (raw_exponent - EXP_BIAS);  // 规格化数
+    assign exponent = (is_denormalized) ? (13'sd1 - EXP_BIAS) :          // 非规格化数，指数为 1-1023 = -1022
+                    (is_special_exp)  ? 12'sd0 :                  // 特殊值 (Inf, NaN)，指数可为0
+                                      ($signed({2'b0, raw_exponent}) - EXP_BIAS); // 规格化数
 
 
     // 尾数计算：

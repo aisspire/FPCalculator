@@ -1,0 +1,24 @@
+/*  .\file\filelist_div.txt
+    注意：路径应为相对于你执行iverilog命令的位置
+    假设你在项目根目录执行*/
+.\src\fp_div.v
+
+/*------依赖的所有子模块------*/
+.\src\common\fp_decomposer.v
+
+.\src\common\fp_recomposer.v
+
+
+.\src\common\fp_rounder.v
+
+
+/*------testbench文件------*/
+.\tb\tb_fp_div.v
+
+
+/*------命令------*/
+/*
+    .\tool\iverilog\bin\iverilog.exe -o .\out\tb_fp_div.out -c .\file\filelist_div.txt
+    .\tool\iverilog\bin\vvp.exe .\out\tb_fp_div.out
+    .\tool\iverilog\gtkwave\bin\gtkwave.exe tb_fp_div.vcd
+*/

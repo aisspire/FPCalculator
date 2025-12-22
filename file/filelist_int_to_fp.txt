@@ -1,0 +1,31 @@
+// filelist.txt
+// 注意：路径应为相对于你执行iverilog命令的位置
+// 假设你在项目根目录执行
+
+src/fp_add_sub.v
+src/fp_div.v
+src/fp_mul.v
+src/fp_to_int.v
+src/int_to_fp.v
+
+// 下面是你fp_add_sub.v所依赖的所有子模块
+// 根据你的设计，你可能需要增删这些文件
+src/common/add_sub_53.v
+src/common/alignment_shifter.v
+src/common/fp_decomposer.v
+src/common/fp_recomposer.v
+src/common/fp_rounder.v
+src/common/lzc_53.v
+src/common/lzc_64.v
+src/common/multiplier_53x53.v
+src/common/restoring_divider.v
+
+// 最后是我们的testbench文件
+//tb/tb_fp_add_sub.v
+tb/tb_fp_mul.v
+tb/tb_fp_div.v
+
+
+//  .\tool\iverilog\bin\iverilog.exe -o tb_fp_add_sub.out -c filelist.txt
+//  .\tool\iverilog\bin\vvp.exe tb_fp_add_sub.out
+//  .\tool\iverilog\gtkwave\bin\gtkwave.exe .\vcd\tb_fp_add_sub.vcd
