@@ -16,5 +16,5 @@
 /*
     .\tool\iverilog\bin\iverilog.exe -o .\out\tb_fp_to_int.out -c .\file\filelist_fp_to_int.txt
     .\tool\iverilog\bin\vvp.exe .\out\tb_fp_to_int.out
-    .\tool\iverilog\gtkwave\bin\gtkwave.exe tb_fp_to_int.vcd
+    .\tool\iverilog\gtkwave\bin\gtkwave.exe ./vcd/tb_fp_to_int.vcd
 */

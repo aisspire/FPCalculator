@@ -19,5 +19,5 @@
 /*
     .\tool\iverilog\bin\iverilog.exe -o .\out\tb_fp_mul.out -c .\file\filelist_mul.txt
     .\tool\iverilog\bin\vvp.exe .\out\tb_fp_mul.out
-    .\tool\iverilog\gtkwave\bin\gtkwave.exe tb_fp_mul.vcd
+    .\tool\iverilog\gtkwave\bin\gtkwave.exe ./vcd/tb_fp_mul.vcd
 */

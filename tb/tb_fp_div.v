@@ -84,7 +84,7 @@ module tb_fp_div;
         tb_fp_b = 0;
 
         // 生成波形文件 (可选)
-        $dumpfile("tb_fp_div.vcd");
+        $dumpfile("./vcd/tb_fp_div.vcd");
         $dumpvars(0, tb_fp_div);
 
         // 释放复位
@@ -93,7 +93,7 @@ module tb_fp_div;
         tb_rst_n = 1;
         @(posedge tb_clk);
         
-        $display("================== 开始测试 fp_div_64 ==================");
+        $display("================== Start Test fp_div_64 ==================");
 
         // --- 基础运算 ---
         // 6.0 / 2.0 = 3.0
@@ -156,7 +156,7 @@ module tb_fp_div;
         run_test(64'h0010000000000000, 64'h4630000000000000, 64'h0000000000000000, 
                  "Test 12: Min_Norm / Large (Underflow -> 0)");
 
-        $display("================== 结束测试 fp_div_64 ==================");
+        $display("================== Stop Test fp_div_64 ==================");
         #20;
         $finish;
     end

@@ -53,11 +53,11 @@ module tb_int_to_fp;
         tb_int_in = 0;
 
         // 生成波形文件
-        $dumpfile("tb_int_to_fp.vcd");
+        $dumpfile("./vcd/tb_int_to_fp.vcd");
         $dumpvars(0, tb_int_to_fp);
 
         #20;
-        $display("================== 开始测试 int_to_fp ==================");
+        $display("================== Start Test int_to_fp ==================");
         $display("Rounding Mode: Round to Nearest, Ties to Even (Balanced)");
 
         // ------------------------------------------------------------
@@ -158,7 +158,7 @@ module tb_int_to_fp;
         run_test(64'h0040000000000003, 64'h4350000000000001, 
                 "Test 10: Round Up (Fraction > 0.5)");
 
-        $display("================== 结束测试 int_to_fp ==================");
+        $display("================== Stop Test int_to_fp ==================");
         #20;
         $finish;
     end

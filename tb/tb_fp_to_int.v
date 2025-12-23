@@ -46,10 +46,10 @@ module tb_fp_to_int;
         tb_fp_in = 0;
 
         // 生成波形文件 (可选)
-        $dumpfile("tb_fp_to_int.vcd");
+        $dumpfile("./vcd/tb_fp_to_int.vcd");
         $dumpvars(0, tb_fp_to_int);
 
-        $display("================== 开始测试 fp_to_int (Round to Nearest Even) ==================");
+        $display("================== Start Test fp_to_int (Round to Nearest Even) ==================");
         #10;
 
         // --- 1. 基础整数转换 ---
@@ -124,7 +124,7 @@ module tb_fp_to_int;
         // 如果你的设计对 NaN 输出全0：
         // run_test(64'h7FF8000000000001, 64'h0000000000000000, "Test 13: NaN -> 0 (Assumption)");
 
-        $display("================== 结束测试 fp_to_int ==================");
+        $display("================== Stop Test fp_to_int ==================");
         #20;
         $finish;
     end

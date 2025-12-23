@@ -20,5 +20,5 @@
 /*
     .\tool\iverilog\bin\iverilog.exe -o .\out\tb_fp_div.out -c .\file\filelist_div.txt
     .\tool\iverilog\bin\vvp.exe .\out\tb_fp_div.out
-    .\tool\iverilog\gtkwave\bin\gtkwave.exe tb_fp_div.vcd
+    .\tool\iverilog\gtkwave\bin\gtkwave.exe ./vcd/tb_fp_div.vcd
 */

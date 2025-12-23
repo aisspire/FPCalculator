@@ -12,7 +12,6 @@ module tb_fp_add_sub;
     wire [63:0] tb_fp_out;     // 结果输出
 
     // 2. 实例化待测模块 (DUT)
-    // 注意：这里连接的是 File 2 中定义的 fp_add_sub 端口
     fp_add_sub uut (
         .fp_a_in    (tb_fp_a),
         .fp_b_in    (tb_fp_b),
@@ -66,7 +65,7 @@ module tb_fp_add_sub;
         tb_is_sub = 0;
 
         // 生成波形文件
-        $dumpfile("tb_fp_add_sub.vcd");
+        $dumpfile("./vcd/tb_fp_add_sub.vcd");
         $dumpvars(0, tb_fp_add_sub);
 
         // 释放复位
@@ -75,7 +74,7 @@ module tb_fp_add_sub;
         tb_rst_n = 1;
         @(posedge tb_clk);
         
-        $display("================== 开始测试 fp_add_sub ==================");
+        $display("================== Start Test fp_add_sub ==================");
 
         // --- 测试用例 #1: 简单加法 ---
         // 1.0 + 2.0 = 3.0
@@ -132,7 +131,7 @@ module tb_fp_add_sub;
         run_test(64'h3FF0000000000001, 64'h3CA0000000000000, 1'b0, 64'h3FF0000000000002, 
                  "Test 11: Rounding (Ties to Even)");
 
-        $display("================== 结束测试 fp_add_sub ==================");
+        $display("================== Stop Test fp_add_sub ==================");
         #20;
         $finish;
     end

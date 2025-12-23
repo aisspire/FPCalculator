@@ -52,10 +52,10 @@ module tb_fp_mul;
         tb_b = 0;
 
         // 生成波形文件 (可选)
-        $dumpfile("tb_fp_mul.vcd");
+        $dumpfile("./vcd/tb_fp_mul.vcd");
         $dumpvars(0, tb_fp_mul);
         
-        $display("================== 开始测试 fp_mul_64 ==================");
+        $display("================== Start Test fp_mul_64 ==================");
         #10;
 
         // --- 基础运算 ---
@@ -159,7 +159,7 @@ module tb_fp_mul;
         run_test(64'h0010000000000000, 64'h3CA0000000000000, 64'h0000000000000000, 
                  "Test 13: Min_Norm * 2^-53 -> Underflow to 0");
 
-        $display("================== 结束测试 fp_mul_64 ==================");
+        $display("================== Stop Test fp_mul_64 ==================");
         #20;
         $finish;
     end
