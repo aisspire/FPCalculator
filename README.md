@@ -1,4 +1,57 @@
-# 课程设计
+# 文件结构
+
+```txt
+FPCalculator
++--- file （存放指令以及编译列表）
+|   +--- filelist_add_sub.txt
+|   +--- filelist_div.txt
+|   +--- filelist_fp_to_int.txt
+|   +--- filelist_int_to_fp.txt
+|   \--- filelist_mul.txt
++--- out （编译结果）
+|   +--- tb_fp_add_sub.out
+|   +--- tb_fp_div.out
+|   +--- tb_fp_mul.out
+|   +--- tb_fp_to_int.out
+|   \--- tb_int_to_fp.out
++--- src （源代码）
+|   +--- common
+|   |   +--- add_sub_53.v
+|   |   +--- alignment_shifter.v
+|   |   +--- fp_decomposer.v
+|   |   +--- fp_recomposer.v
+|   |   +--- fp_rounder.v
+|   |   +--- lzc_53.v
+|   |   \--- lzc_64.v
+|   +--- fp_add_sub.v
+|   +--- fp_div.v
+|   +--- fp_mul.v
+|   +--- fp_to_int.v
+|   \--- int_to_fp.v
++--- tb （测试数据）
+|   +--- tb_fp_add_sub.v
+|   +--- tb_fp_div.v
+|   +--- tb_fp_mul.v
+|   +--- tb_fp_to_int.v
+|   \--- tb_int_to_fp.v
++--- vcd （波形图文件）
+|   +--- tb_fp_add_sub.vcd
+|   +--- tb_fp_div.vcd
+|   +--- tb_fp_mul.vcd
+|   +--- tb_fp_to_int.vcd
+|   \--- tb_int_to_fp.vcd
+\--- README.md
+```
+
+# 使用方式
+
+在测试数据修改内容，然后根据功能在`file`文件夹底下查找对应的命令
+
+# 环境
+
+请在根目录下存放`tool`文件夹，内容是[`iverilog`](https://bleyer.org/icarus/)的工具包
+
+# 课程设计内容
 
 ## IEEE754格式
 
